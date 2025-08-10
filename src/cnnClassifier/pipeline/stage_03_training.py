@@ -1,42 +1,34 @@
+from tensorflow.keras.models import load_model
 from cnnClassifier.config.configuration import ConfigurationManager
 from cnnClassifier.components.prepare_callbacks import PrepareCallback
 from cnnClassifier.components.training import Training
-from cnnClassifier import logger
-
 
 
 STAGE_NAME = "Training"
 
 
 class ModelTrainingPipeline:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def main(self):
+    def main(self) -> None:
         config = ConfigurationManager()
-        prepare_callbacks_config = config.get_prepare_callback_config()
-        prepare_callbacks = PrepareCallback(config=prepare_callbacks_config)
+
+        cb_cfg = config.get_prepare_callback_config()
+        prepare_callbacks = PrepareCallback(cb_cfg)
         callback_list = prepare_callbacks.get_tb_ckpt_callbacks()
 
+        train_cfg = config.get_training_config()
 
-        training_config = config.get_training_config()
-        training = Training(config=training_config)
-        training.get_base_model()
-        training.train_valid_generator()
-        training.train(
-            callback_list=callback_list
-        )
+        try:
+            model = load_model("artifacts/prepare_base_model/base_model_updated.h5")
+        except Exception:
+            model = load_model("artifacts/prepare_base_model/base_model.h5")
+
+        trainer = Training(train_cfg)
+        trainer.train(model, callback_list)
 
 
-
-
-if __name__ == '__main__':
-    try:
-        logger.info(f"*******************")
-        logger.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
-        obj = ModelTrainingPipeline()
-        obj.main()
-        logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\nx==========x")
-    except Exception as e:
-        logger.exception(e)
-        raise e
+if __name__ == "__main__":
+    pipeline = ModelTrainingPipeline()
+    pipeline.main()
