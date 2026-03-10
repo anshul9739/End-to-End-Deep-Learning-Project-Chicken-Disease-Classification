@@ -44,6 +44,7 @@ class PredictionPipeline:
 
         img = load_img(self.filename, target_size=(224, 224))
         arr = img_to_array(img)
+        arr = arr / 255.0  # Rescale to match training preprocessing
         arr = np.expand_dims(arr, axis=0)
 
         preds = model.predict(arr)

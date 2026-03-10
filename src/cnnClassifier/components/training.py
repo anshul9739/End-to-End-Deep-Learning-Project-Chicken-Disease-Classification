@@ -48,21 +48,13 @@ class Training:
         return train_gen, val_gen
 
     def _ensure_compiled(self, model: tf.keras.Model) -> tf.keras.Model:
-        needs_compile = (
-            getattr(model, "optimizer", None) is None
-            or getattr(model, "loss", None) != "sparse_categorical_crossentropy"
+        # Always recompile with a fresh optimizer to avoid variable mismatch errors
+        # when loading saved models with attached optimizers
+        model.compile(
+            optimizer=tf.keras.optimizers.SGD(learning_rate=0.01),
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"],
         )
-
-        if needs_compile:
-            model.compile(
-                optimizer=(
-                    model.optimizer
-                    if getattr(model, "optimizer", None) is not None
-                    else tf.keras.optimizers.SGD(learning_rate=0.01)
-                ),
-                loss="sparse_categorical_crossentropy",
-                metrics=["accuracy"],
-            )
         return model
 
     def train(
